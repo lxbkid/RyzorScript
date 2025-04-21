@@ -1,131 +1,263 @@
--- Danh sách yêu cầu thắng cho từng world
-local worldWins = {
-    [1] = "Free", [2] = "10", [3] = "20", [4] = "30", [5] = "50",
-    [6] = "100", [7] = "250", [8] = "500", [9] = "1k", [10] = "2k",
-    [11] = "4k", [12] = "7k", [13] = "11k", [14] = "16k"
+-- Dịch vụ Roblox
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+
+-- Tạo GUI chính
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PhantomMenu"
+ScreenGui.DisplayOrder = 999999
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Enabled = true -- đảm bảo GUI được bật
+
+-- Đảm bảo GUI được thêm vào đúng Parent
+local CoreGui = game:GetService("CoreGui")
+local success, result = pcall(function()
+    ScreenGui.Parent = CoreGui
+end)
+if not success then
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Tạo MainFrame (menu chính)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 500, 0, 650)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -300)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+
+-- Tạo nút logo để hiện lại menu
+local logoButton = Instance.new("ImageButton")
+logoButton.Name = "LogoButton"
+logoButton.Size = UDim2.new(0, 50, 0, 50)
+logoButton.Position = UDim2.new(0, 10, 0, 10) -- Góc trên trái cho dễ thấy
+logoButton.BackgroundTransparency = 1
+logoButton.Image = "rbxassetid://137967475559270" -- Icon bánh răng, không lỗi
+logoButton.Visible = false
+logoButton.Parent = ScreenGui
+
+-- Kiểm tra xem MainFrame và logo có tồn tại
+if MainFrame then print("MainFrame OK") else warn("MainFrame lỗi") end
+if logoButton then print("LogoButton OK") else warn("LogoButton lỗi") end
+
+-- Nhấn RightCtrl để ẩn menu và hiện logo
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
+        MainFrame.Visible = false
+        logoButton.Visible = true
+        print("Đã ẩn menu và hiện logo")
+    end
+end)
+
+-- Nhấn vào logo để hiện lại menu
+logoButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    logoButton.Visible = false
+    print("Đã hiện lại menu và ẩn logo")
+end)
+
+-- Gán PrimaryPart tự động cho các World
+local function assignPrimaryParts()
+    local worldsFolder = workspace:FindFirstChild("Worlds")
+    if worldsFolder and worldsFolder:FindFirstChild("Worlds") then
+        local subFolder = worldsFolder.Worlds
+        for _, world in pairs(subFolder:GetChildren()) do
+            if world:IsA("Model") and not world.PrimaryPart then
+                for _, part in pairs(world:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        world.PrimaryPart = part
+                        print("Đã gán PrimaryPart cho " .. world.Name .. " là: " .. part.Name)
+                        break
+                    end
+                end
+            end
+        end
+    else
+        warn("Không tìm thấy workspace.Worlds.Worlds!")
+    end
+end
+assignPrimaryParts()
+
+-- Main Frame
+MainFrame.Size = UDim2.new(0, 500, 0, 650)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -300)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner_Main = Instance.new("UICorner")
+UICorner_Main.CornerRadius = UDim.new(0, 10)
+UICorner_Main.Parent = MainFrame
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Name = "MenuTitle"
+Title.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "RyzorKid | Script"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 22
+Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.Parent = MainFrame
+
+-- Navigation Bar
+local Navigation = Instance.new("Frame")
+Navigation.Size = UDim2.new(1, 0, 0, 50)
+Navigation.Position = UDim2.new(0, 0, 0, 40)
+Navigation.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Navigation.Parent = MainFrame
+
+local UICorner_Nav = Instance.new("UICorner")
+UICorner_Nav.CornerRadius = UDim.new(0, 6)
+UICorner_Nav.Parent = Navigation
+
+-- Tạo các trang
+local Pages = {
+    Main = Instance.new("ScrollingFrame"),
+    Egg = Instance.new("Frame")
 }
 
--- Tạo GUI Menu
-local screenGui = Instance.new("ScreenGui")
-local frame = Instance.new("Frame")
-local title = Instance.new("TextLabel")
-local instructions = Instance.new("TextLabel")
+for name, page in pairs(Pages) do
+    page.Name = name
+    page.Size = UDim2.new(1, 0, 1, -90)
+    page.Position = UDim2.new(0, 0, 0, 90)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = MainFrame
+end
 
-screenGui.Name = "TeleportMenu"
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+-- Scrolling Frame cho Main
+Pages.Main.ScrollBarThickness = 6
+Pages.Main.CanvasSize = UDim2.new(0, 0, 0, 700)
+Pages.Main.ScrollBarImageColor3 = Color3.fromRGB(147, 112, 219)
 
-frame.Name = "MenuFrame"
-frame.Size = UDim2.new(0.4, 0, 0.7, 0)
-frame.Position = UDim2.new(0.3, 0, 0.15, 0)
-frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.new(0.3, 0.3, 0.3)
-frame.Parent = screenGui
+-- Tạo nút điều hướng
+local NavButtons = {}
+local function CreateNavButton(name, text, position)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(0.4, -10, 0.8, -10)
+    Button.Position = position
+    Button.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    Button.Text = text
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 16
+    Button.Parent = Navigation
 
-title.Name = "Title"
-title.Text = "RYZOR-SCRIPT"
-title.Size = UDim2.new(1, 0, 0.1, 0)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-title.Font = Enum.Font.SourceSansBold
-title.TextScaled = true
-title.Parent = frame
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 6)
+    UICorner.Parent = Button
 
-instructions.Name = "Instructions"
-instructions.Text = "Nhấn Open để bật, Close để dừng. Menu tự động ẩn/hiện với Ctrl."
-instructions.Size = UDim2.new(1, 0, 0.08, 0)
-instructions.Position = UDim2.new(0, 0, 0.1, 0)
-instructions.BackgroundTransparency = 1
-instructions.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-instructions.Font = Enum.Font.SourceSansBold
-instructions.TextScaled = true
-instructions.Parent = frame
+    NavButtons[name] = Button
 
-local teleportStatus = {}
+    Button.MouseButton1Click:Connect(function()
+        for n, p in pairs(Pages) do
+            p.Visible = (n == name)
+        end
+        for _, b in pairs(NavButtons) do
+            b.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        end
+        Button.BackgroundColor3 = Color3.fromRGB(147, 112, 219)
+    end)
+end
 
--- Hàm tạo nút
-local function createButton(worldIndex, positionY)
+-- Vị trí nút điều hướng
+CreateNavButton("Main", "Main", UDim2.new(0.1, 0, 0, 5))
+CreateNavButton("Egg", "Egg", UDim2.new(0.55, 0, 0, 5))
+
+-- Nội dung Main Page
+local function InitializeMainPage()
+    local function createButton(worldIndex, positionY)
+        local worldName = "World" .. worldIndex
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0.9, 0, 0.06, 0)
+        frame.Position = UDim2.new(0.05, 0, positionY, 0)
+        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        frame.BorderSizePixel = 0
+        frame.Parent = Pages.Main
+
+        local button = Instance.new("TextButton")
+        button.Text = "World " .. worldIndex
+        button.Size = UDim2.new(0.7, 0, 1, 0)
+        button.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        button.TextColor3 = Color3.new(1, 1, 1)
+        button.Font = Enum.Font.SourceSansBold
+        button.TextSize = 14
+        button.Parent = frame
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 6)
+        UICorner.Parent = button
+
+        local toggle = Instance.new("Frame")
+        toggle.Size = UDim2.new(0.05, 0, 0.4, 0)
+        toggle.Position = UDim2.new(0.85, 0, 0.3, 0)
+        toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        toggle.Parent = frame
+
+        local UICorner_Toggle = Instance.new("UICorner")
+        UICorner_Toggle.CornerRadius = UDim.new(1, 0)
+        UICorner_Toggle.Parent = toggle
+
+        local active = false
+
+        local teleporting = false
+
+local function teleportLoop()
+    while teleporting do
+        local player = Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local worldModel = Workspace.Worlds.Worlds:FindFirstChild(worldName)
+            if worldModel and worldModel:IsA("Model") and worldModel.PrimaryPart then
+                player.Character.HumanoidRootPart.CFrame = worldModel.PrimaryPart.CFrame
+            else
+                warn("Không tìm thấy hoặc không có PrimaryPart cho: " .. worldName)
+                teleporting = false
+                toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                return
+            end
+        end
+        wait(1)
+    end
+end
+
+button.MouseButton1Click:Connect(function()
+    teleporting = not teleporting
+    if teleporting then
+        toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Xanh
+        teleportLoop()
+    else
+        toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Đỏ
+    end
+end)
+
+    end
+
+    for i = 1, 14 do
+        createButton(i, 0.07 * (i - 1))
+    end
+end
+
+-- Nội dung Egg Page
+local function InitializeEggPage()
     local label = Instance.new("TextLabel")
-    local winReq = worldWins[worldIndex] or "?"
-    label.Text = "World " .. worldIndex .. " (" .. winReq .. " win)"
-    label.Size = UDim2.new(0.4, 0, 0.05, 0)
-    label.Position = UDim2.new(0.1, 0, positionY, 0)
+    label.Text = "Coming Soon!"
+    label.Size = UDim2.new(0.8, 0, 0.2, 0)
+    label.Position = UDim2.new(0.1, 0, 0.4, 0)
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.new(1, 1, 1)
     label.Font = Enum.Font.SourceSansBold
-    label.TextScaled = true
-    label.Parent = frame
-
-    local buttonOpen = Instance.new("TextButton")
-    buttonOpen.Text = "Open"
-    buttonOpen.Size = UDim2.new(0.2, 0, 0.05, 0)
-    buttonOpen.Position = UDim2.new(0.55, 0, positionY, 0)
-    buttonOpen.BackgroundColor3 = Color3.new(0, 0.8, 0)
-    buttonOpen.TextColor3 = Color3.new(1, 1, 1)
-    buttonOpen.Font = Enum.Font.SourceSansBold
-    buttonOpen.TextScaled = true
-    buttonOpen.Parent = frame
-
-    local buttonClose = Instance.new("TextButton")
-    buttonClose.Text = "Close"
-    buttonClose.Size = UDim2.new(0.2, 0, 0.05, 0)
-    buttonClose.Position = UDim2.new(0.77, 0, positionY, 0)
-    buttonClose.BackgroundColor3 = Color3.new(0.8, 0, 0)
-    buttonClose.TextColor3 = Color3.new(1, 1, 1)
-    buttonClose.Font = Enum.Font.SourceSansBold
-    buttonClose.TextScaled = true
-    buttonClose.Parent = frame
-
-    teleportStatus[worldIndex] = false
-
-    buttonOpen.MouseButton1Click:Connect(function()
-        if not teleportStatus[worldIndex] then
-            teleportStatus[worldIndex] = true
-            buttonOpen.BackgroundColor3 = Color3.new(1, 1, 1) -- Trắng
-            buttonOpen.TextColor3 = Color3.new(0, 0, 0) -- Chữ đen
-
-            print("Dịch chuyển tự động tới World " .. worldIndex)
-            task.spawn(function()
-                while teleportStatus[worldIndex] do
-                    local player = game.Players.LocalPlayer
-                    local character = player.Character or player.CharacterAdded:Wait()
-                    local world = game.Workspace.Worlds.Worlds:FindFirstChild("World" .. worldIndex)
-
-                    if world then
-                        local targetPart = world:FindFirstChild("Part")
-                        if targetPart and targetPart:IsA("BasePart") then
-                            character.HumanoidRootPart.CFrame = targetPart.CFrame + Vector3.new(0, 5, 0)
-                        else
-                            print("Không tìm thấy Part trong World " .. worldIndex)
-                        end
-                    else
-                        print("Không tìm thấy World " .. worldIndex)
-                    end
-                    task.wait(1)
-                end
-            end)
-        end
-    end)
-
-    buttonClose.MouseButton1Click:Connect(function()
-        teleportStatus[worldIndex] = false
-        buttonOpen.BackgroundColor3 = Color3.new(0, 0.8, 0) -- Xanh lá lại
-        buttonOpen.TextColor3 = Color3.new(1, 1, 1) -- Trắng
-        print("Dừng dịch chuyển tự động tới World " .. worldIndex)
-    end)
+    label.TextSize = 16
+    label.Parent = Pages.Egg
 end
 
--- Tạo 14 nút
-for i = 1, 14 do
-    createButton(i, 0.18 + (i - 1) * 0.055)
-end
-
--- Ẩn/hiện menu bằng Ctrl
-local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input, isProcessed)
-    if not isProcessed and input.KeyCode == Enum.KeyCode.LeftControl then
-        frame.Visible = not frame.Visible
-        print("Menu đã được ẩn hoặc hiện!")
-    end
-end)
+-- Khởi tạo trang
+InitializeMainPage()
